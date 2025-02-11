@@ -65,6 +65,8 @@ class BaseModel(ABC, nn.Module):
         
         #getting words embedding
         max_text_length = text_lengths.max()
+        # print(f"******** {max_text_length}")
+        # max_text_length = torch.as_tensor(102)
         words_embedding = torch.zeros(
             batch_size, max_text_length, embed_dim, dtype=token_embeds.dtype, device=token_embeds.device
         )
@@ -89,6 +91,7 @@ class BaseModel(ABC, nn.Module):
                 text_lengths: Optional[torch.Tensor] = None,
                 words_mask: Optional[torch.LongTensor] = None,
                 **kwargs):
+        text_lengths = torch.as_tensor([102])
         
         token_embeds = self.token_rep_layer(input_ids, attention_mask, **kwargs)
 
@@ -143,7 +146,7 @@ class SpanModel(BaseModel):
 
         prompts_embedding, prompts_embedding_mask, words_embedding, mask = self.get_representations(input_ids, attention_mask, 
                                                                                                          text_lengths, words_mask)
-        
+        # needed!        
         span_idx = span_idx*span_mask.unsqueeze(-1)
 
         span_rep = self.span_rep_layer(words_embedding, span_idx)
@@ -152,17 +155,17 @@ class SpanModel(BaseModel):
 
         scores = torch.einsum("BLKD,BCD->BLKC", span_rep, prompts_embedding)
 
-        loss = None
-        if labels is not None:
-            loss = self.loss(scores, labels, prompts_embedding_mask, span_mask, **kwargs)
+        # loss = None
+        # if labels is not None:
+        #     loss = self.loss(scores, labels, prompts_embedding_mask, span_mask, **kwargs)
 
         output = GLiNERModelOutput(
             logits=scores,
-            loss=loss,
-            prompts_embedding=prompts_embedding,
-            prompts_embedding_mask=prompts_embedding_mask,
-            words_embedding=words_embedding,
-            mask=mask,
+            # loss=loss,
+            # prompts_embedding=prompts_embedding,
+            # prompts_embedding_mask=prompts_embedding_mask,
+            # words_embedding=words_embedding,
+            # mask=mask,
         )
         return output
     

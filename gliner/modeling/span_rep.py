@@ -1,6 +1,9 @@
 import torch
 import torch.nn.functional as F
 from torch import nn
+import logging
+
+logger = logging.getLogger(__name__)
 
 from .layers import create_projection_layer
 
@@ -42,6 +45,9 @@ class SpanMLP(nn.Module):
         # query_seg of shape [D, max_width]
 
         B, L, D = h.size()
+        logger.warning(B,L,D)
+
+        logger.warning("++++++++++++++++++++++++++")
 
         span_rep = self.mlp(h)
 
@@ -67,6 +73,7 @@ class SpanCAT(nn.Module):
     def forward(self, h, *args):
         # h of shape [B, L, D]
         # query_seg of shape [D, max_width]
+        print('spancat forward ==============================================')
 
         B, L, D = h.size()
 
@@ -201,8 +208,10 @@ class ConvShare(nn.Module):
 
 
 def extract_elements(sequence, indices):
-    B, L, D = sequence.shape
-    K = indices.shape[1]
+ #   B, L, D = sequence.shape #1,102,768
+    B, L, D = 1, 102, 768
+    K = 1224
+#    K = indices.shape[1] # 1224
 
     # Expand indices to [B, K, D]
     expanded_indices = indices.unsqueeze(2).expand(-1, -1, D)
@@ -239,7 +248,10 @@ class SpanMarker(nn.Module):
     def forward(self, h, span_idx):
         # h of shape [B, L, D]
         # query_seg of shape [D, max_width]
-
+        print(h.size())
+        print("======================================")
+        logger.warning(f"+++++++++++++++++++++++ {h.size()}")
+        print("======================================")
         B, L, D = h.size()
 
         # project start and end
@@ -273,18 +285,29 @@ class SpanMarkerV0(nn.Module):
         self.out_project = create_projection_layer(hidden_size * 2, dropout, hidden_size)
 
     def forward(self, h: torch.Tensor, span_idx: torch.Tensor) -> torch.Tensor:
-        B, L, D = h.size()
-
+#        B, L, D = h.size()
+        B, L, D = 1, 102, 768
+#        print(B,L,D,"++++++++++++++++++++++++++++++++++++++++++")
         start_rep = self.project_start(h)
         end_rep = self.project_end(h)
 
         start_span_rep = extract_elements(start_rep, span_idx[:, :, 0])
         end_span_rep = extract_elements(end_rep, span_idx[:, :, 1])
 
-        cat = torch.cat([start_span_rep, end_span_rep], dim=-1).relu()
+        # cat = torch.cat([start_span_rep, end_span_rep], dim=-1).relu()
 
+        # cat = torch.cat([start_span_rep, end_span_rep], dim=2).relu()
+        
+        stacked = torch.stack((start_span_rep, end_span_rep), dim=3)
+
+        # Reshape the stacked tensor to merge the new dimension with the existing ones
+        # This will result in concatenation along the original dim=2
+        # The new shape will be (batch_size, seq_length, 2 * feature_dim)
+        concatenated = stacked.view(stacked.size(0), stacked.size(1), -1)
+
+        # Apply ReLU activation
+        cat = concatenated.relu()
         return self.out_project(cat).view(B, L, self.max_width, D)
-
 
 class ConvShareV2(nn.Module):
     def __init__(self, hidden_size, max_width):

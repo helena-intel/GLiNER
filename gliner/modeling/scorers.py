@@ -17,6 +17,8 @@ class Scorer(nn.Module):
 
     def forward(self, token_rep, label_rep):
         batch_size, seq_len, hidden_size = token_rep.shape
+        print(token_rep.shape)
+        print("===== +++++++++++ ------------")
         num_classes = label_rep.shape[1]
 
         # (batch_size, seq_len, 3, hidden_size)

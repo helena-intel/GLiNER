@@ -1,6 +1,9 @@
 import torch
 from torch import nn
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence, pad_sequence
+import logging
+
+logger = logging.getLogger(__name__)
 
 class LstmSeq2SeqEncoder(nn.Module):
     def __init__(self, config, num_layers=1, dropout=0., bidirectional=True):
@@ -14,7 +17,9 @@ class LstmSeq2SeqEncoder(nn.Module):
 
     def forward(self, x, mask, hidden=None):
         # Packing the input sequence
-        lengths = mask.sum(dim=1).cpu()
+        # lengths = mask.sum(dim=1).cpu()
+        lengths = torch.as_tensor([102])
+        # logger.warning(f"....................................................... {lengths}")
         packed_x = pack_padded_sequence(x, lengths, batch_first=True, enforce_sorted=False)
 
         # Passing packed sequence through LSTM

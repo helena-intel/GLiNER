@@ -5,13 +5,13 @@ import numpy as np
 from gliner import GLiNER
 
 import torch
-from onnxruntime.quantization import quantize_dynamic, QuantType
+# from onnxruntime.quantization import quantize_dynamic, QuantType
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_path', type=str, default= "logs/model_12000")
+    parser.add_argument('--model_path', type=str, default= "gliner-community/gliner_large-v2.5")
     parser.add_argument('--save_path', type=str, default = 'model/')
-    parser.add_argument('--quantize', type=bool, default = True)
+    parser.add_argument('--quantize', type=bool, default = False)
     args = parser.parse_args()
     
     if not os.path.exists(args.save_path):
@@ -59,17 +59,21 @@ if __name__ == "__main__":
         f=onnx_save_path,
         input_names=input_names,
         output_names=["logits"],
-        dynamic_axes=dynamic_axes,
+        # dynamic_axes=dynamic_axes,
         opset_version=14,
+#        do_constant_folding=True
     )
 
-    if args.quantize:
-        quantized_save_path = os.path.join(args.save_path, "model_quantized.onnx")
-        # Quantize the ONNX model
-        print("Quantizing the model...")
-        quantize_dynamic(
-            onnx_save_path,  # Input model
-            quantized_save_path,  # Output model
-            weight_type=QuantType.QUInt8  # Quantize weights to 8-bit integers
-        )
+    # if args.quantize:
+    #     quantized_save_path = os.path.join(args.save_path, "model_quantized.onnx")
+    #     # Quantize the ONNX model
+    #     print("Quantizing the model...")
+    #     quantize_dynamic(
+    #         onnx_save_path,  # Input model
+    #         quantized_save_path,  # Output model
+    #         weight_type=QuantType.QUInt8  # Quantize weights to 8-bit integers
+    #     )
     print("Done!")
+    import openvino as ov
+    model = ov.Core().read_model(onnx_save_path)
+    print(model)
