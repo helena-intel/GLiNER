@@ -217,17 +217,17 @@ class TokenModel(BaseModel):
         
         scores = self.scorer(words_embedding, prompts_embedding)
 
-        loss = None
-        if labels is not None:
-            loss = self.loss(scores, labels, prompts_embedding_mask, mask, **kwargs)
+        # loss = None
+        # if labels is not None:
+        #    loss = self.loss(scores, labels, prompts_embedding_mask, mask, **kwargs)
         
         output = GLiNERModelOutput(
             logits=scores,
-            loss=loss,
-            prompts_embedding=prompts_embedding,
-            prompts_embedding_mask=prompts_embedding_mask,
-            words_embedding=words_embedding,
-            mask=mask,
+        #    loss=loss,
+        #    prompts_embedding=prompts_embedding,
+        #    prompts_embedding_mask=prompts_embedding_mask,
+        #    words_embedding=words_embedding,
+        #    mask=mask,
         )
         return output
     
